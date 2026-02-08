@@ -1,0 +1,104 @@
+:root {
+    --bg-color: #050505;
+    --bg-secondary: #121212;
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1aa;
+    --accent: #ffffff; 
+    --font-main: 'Inter', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* --- Navigation --- */
+.navbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 5%; position: fixed; width: 100%; top: 0; z-index: 1000;
+    background: rgba(5, 5, 5, 0.85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.logo { font-weight: 800; font-size: 1.2rem; text-transform: uppercase; }
+.nav-links { display: flex; gap: 30px; list-style: none; }
+.nav-links a { font-size: 0.9rem; text-decoration: none; color: var(--text-secondary); }
+.nav-links a:hover { color: #fff; }
+
+/* --- Hero --- */
+.hero {
+    height: 100vh; position: relative; display: flex;
+    align-items: center; justify-content: center; text-align: center;
+}
+.hero-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.6; }
+.hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, transparent, #050505); z-index: -1; }
+.hero-content h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; margin-bottom: 1rem; padding: 0 10px; }
+
+/* --- Buttons --- */
+.btn-primary {
+    background: #fff; color: #000; padding: 15px 35px;
+    border-radius: 4px; font-weight: 700; text-decoration: none;
+    display: inline-block; text-transform: uppercase; font-size: 0.8rem;
+}
+
+/* --- Tech Stack --- */
+.tech-stack { padding: 30px; display: flex; justify-content: center; align-items: center; gap: 30px; border-bottom: 1px solid #1a1a1a; }
+.tech-icons { display: flex; gap: 20px; color: var(--text-secondary); align-items: center; }
+
+/* --- Portfolio Grid --- */
+.section { padding: 100px 5%; max-width: 1200px; margin: 0 auto; }
+.portfolio-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; }
+.project-card { background: var(--bg-secondary); border-radius: 8px; overflow: hidden; }
+.project-info { padding: 20px; }
+.project-info h3 { margin-bottom: 5px; }
+
+/* --- 3D Model Viewer Specific --- */
+model-viewer {
+    width: 100%; height: 400px;
+    background-color: #0f0f0f;
+    --poster-color: transparent;
+    outline: none;
+}
+.static-img { width: 100%; height: 400px; object-fit: cover; }
+
+/* --- Comparison Slider --- */
+.comparison-container {
+    position: relative; width: 100%; height: 400px; overflow: hidden; cursor: col-resize;
+}
+.comp-img-bottom { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+.comp-img-top-wrapper {
+    position: absolute; top: 0; left: 0; width: 50%; height: 100%;
+    overflow: hidden; border-right: 2px solid #fff; z-index: 2;
+}
+.comp-img-top { width: 1200px; height: 400px; object-fit: cover; }
+.slider-handle {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: 3; pointer-events: none; display: flex; flex-direction: column; align-items: center;
+}
+.handle-circle {
+    width: 40px; height: 40px; background: #fff; color: #000;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+}
+
+/* --- Services --- */
+.services-bg { background: #080808; }
+.services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+.service-card { padding: 40px; background: var(--bg-secondary); border: 1px solid #1a1a1a; border-radius: 8px; }
+.service-card i { font-size: 2rem; margin-bottom: 20px; }
+
+/* --- Footer --- */
+footer { padding: 80px 5%; background: #000; border-top: 1px solid #1a1a1a; }
+.footer-content { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; }
+.contact-form { display: flex; flex-direction: column; gap: 15px; }
+.contact-form input, .contact-form textarea {
+    background: #111; border: 1px solid #222; padding: 15px; color: #fff; border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .footer-content { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+}

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSA Production | 3D Visualization by Bhavesh Ahire</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Model Viewer Script (For Interactive 3D) -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.1.1/model-viewer.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo">BSA PRODUCTION<span class="dot">.</span></div>
+        <ul class="nav-links">
+            <li><a href="#work">Work</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#contact" class="btn-nav">Get a Quote</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <video autoplay muted loop playsinline class="hero-video" poster="assets/slider-final.jpg">
+            <source src="assets/hero-loop.mp4" type="video/mp4">
+            <img src="assets/slider-final.jpg" alt="3D Product Render">
+        </video>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1>Hyper-realistic 3D Product Visualization</h1>
+            <p>Turning CAD data into market-ready photorealistic assets.</p>
+            <a href="#contact" class="btn-primary">Start Project</a>
+        </div>
+    </header>
+
+    <!-- Tech Stack -->
+    <section class="tech-stack">
+        <p class="tech-label">POWERED BY</p>
+        <div class="tech-icons">
+            <i class="fa-solid fa-cube" title="Blender 3D"></i>
+            <i class="fa-solid fa-layer-group" title="Adobe Suite"></i>
+            <i class="fa-solid fa-microchip" title="RTX Workstation"></i>
+            <span>Cycles / Eevee</span>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="work" class="section">
+        <div class="section-header">
+            <h2>Selected Works</h2>
+            <p>Interactive 3D models and high-fidelity renders.</p>
+        </div>
+
+        <div class="portfolio-grid">
+            
+            <!-- Project 1: Comparison Slider -->
+            <div class="project-card">
+                <div class="comparison-container square-aspect" id="comparison-1">
+                    <img src="assets/slider-clay.jpg" alt="Clay Render" class="comp-img-bottom">
+                    <div class="comp-img-top-wrapper">
+                        <img src="assets/slider-final.jpg" alt="Final Render" class="comp-img-top">
+                    </div>
+                    <div class="slider-handle">
+                        <div class="handle-line"></div>
+                        <div class="handle-circle"><i class="fa-solid fa-arrows-left-right"></i></div>
+                        <div class="handle-line"></div>
+                    </div>
+                </div>
+                <div class="project-info">
+                    <h3>'RSA Deatho' Fragrance</h3>
+                    <p>Before/After: Clay vs. Final Render</p>
+                </div>
+            </div>
+
+            <!-- Project 2: INTERACTIVE 3D MODEL -->
+            <div class="project-card">
+                <div class="model-wrapper">
+                    <model-viewer 
+    src="assets/glass-study.glb" 
+    poster="assets/project-glass.jpg" 
+    alt="3D Interactive Bottle" 
+    shadow-intensity="1" 
+    camera-controls 
+    auto-rotate 
+    touch-action="pan-y"
+    environment-image="neutral" 
+    exposure="1.2">
+</model-viewer>
+                </div>
+                <div class="project-info">
+                    <h3>Interactive Glass Study</h3>
+                    <p>Click and drag to rotate the 3D model.</p>
+                </div>
+            </div>
+
+            <!-- Project 3: Static Image -->
+            <div class="project-card">
+                <img src="assets/project-stylized.jpg" alt="Stylized Composition" class="static-img">
+                <div class="project-info">
+                    <h3>Abstract Composition</h3>
+                    <p>Material study and procedural texturing.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="section services-bg">
+        <div class="section-header">
+            <h2>Services</h2>
+        </div>
+        <div class="services-grid">
+            <div class="service-card">
+                <i class="fa-solid fa-shapes"></i>
+                <h3>Product Modeling</h3>
+                <p>High-poly modeling optimized for close-up photorealistic shots.</p>
+            </div>
+            <div class="service-card">
+                <i class="fa-solid fa-lightbulb"></i>
+                <h3>Studio Rendering</h3>
+                <p>Lighting setups designed for E-commerce (Amazon, Shopify).</p>
+            </div>
+            <div class="service-card">
+                <i class="fa-solid fa-film"></i>
+                <h3>3D Animation</h3>
+                <p>Cinematic reveals and 360-degree turntable loops.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="footer-content">
+            <div class="footer-left">
+                <h2>Let's create something real.</h2>
+                <p><strong>Bhavesh Ahire</strong></p>
+                <p class="email-link"><a href="mailto:bhaveshahire14700@gmail.com">bhaveshahire14700@gmail.com</a></p>
+                <p class="hardware-note"><i class="fa-solid fa-bolt"></i> Powered by NVIDIA RTX</p>
+            </div>
+            <div class="footer-right">
+                <form class="contact-form">
+                    <input type="text" placeholder="Name" required>
+                    <input type="email" placeholder="Email" required>
+                    <textarea placeholder="Tell me about your project..." rows="4" required></textarea>
+                    <button type="submit" class="btn-primary">Send Request</button>
+                </form>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
