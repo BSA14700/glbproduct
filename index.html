@@ -2,162 +2,800 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BSA Production | 3D Visualization by Bhavesh Ahire</title>
-    
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Model Viewer Script (For Interactive 3D) -->
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.1.1/model-viewer.min.js"></script>
-    
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Waifu Breaker: 5 Level Campaign</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=M+PLUS+Rounded+1c:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #1a1a24;
+            --primary: #00d4ff;
+            --accent: #ff007f;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 100%;
+            max-height: 850px;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 50% 50%, #2a2a35 0%, #1a1a24 100%);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* UI Layer */
+        .ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex; flex-direction: column;
+            justify-content: space-between;
+        }
+
+        #top-bar {
+            padding: 10px 15px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+            z-index: 10;
+        }
+
+        .hud-row {
+            display: flex; justify-content: space-between;
+            font-family: 'Fredoka One', cursive;
+            font-size: 20px; color: white;
+            margin-bottom: 5px;
+        }
+
+        #progress-container {
+            width: 100%; height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px; overflow: hidden;
+        }
+        #progress-fill {
+            height: 100%; width: 0%;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+
+        /* --- IMMERSIVE CENTER REACTION OVERLAY --- */
+        #reaction-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 300px; height: 300px;
+            pointer-events: none; /* Let clicks pass through usually */
+            z-index: 50;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+            opacity: 0;
+        }
+
+        #reaction-overlay.active {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        #reaction-image {
+            width: 220px; height: 220px;
+            object-fit: cover;
+            border-radius: 20px;
+            border: 4px solid #fff;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            background: #222;
+        }
+        
+        #reaction-bubble {
+            background: white; color: #222;
+            padding: 10px 20px; border-radius: 20px;
+            font-weight: bold; margin-bottom: 10px;
+            text-align: center; font-size: 16px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            max-width: 90%;
+            animation: float 2s infinite ease-in-out;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            25% { transform: translate(-52%, -50%) rotate(-5deg); }
+            75% { transform: translate(-48%, -50%) rotate(5deg); }
+            100% { transform: translate(-50%, -50%) rotate(0deg); }
+        }
+        .anim-shake #reaction-image { animation: shake 0.4s ease-in-out; border-color: #ff3333; }
+
+        @keyframes pop {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .anim-pop #reaction-image { animation: pop 0.4s ease-out; border-color: #00d4ff; }
+
+        @keyframes victoryBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .anim-win #reaction-image { animation: victoryBounce 1s infinite; border-color: gold; box-shadow: 0 0 50px gold; }
+
+        .anim-lose #reaction-image { filter: grayscale(100%); border-color: #555; }
+
+        /* --- BOTTOM RIGHT CHARACTER (Persistent) --- */
+        #character-area {
+            position: absolute; bottom: 20px; right: 20px;
+            width: 100px; height: 100px; /* Smaller when passive */
+            pointer-events: none; z-index: 5;
+            transition: opacity 0.3s;
+        }
+        #waifu-sprite {
+            width: 100%; height: 100%; object-fit: cover;
+            border-radius: 15px; border: 2px solid rgba(255,255,255,0.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            background: #222;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(13, 13, 22, 0.95);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 100; pointer-events: auto;
+            backdrop-filter: blur(10px);
+            transition: opacity 0.3s;
+        }
+        .hidden { opacity: 0; pointer-events: none; }
+
+        h1 {
+            font-family: 'Fredoka One', cursive; font-size: 40px;
+            margin-bottom: 20px; text-align: center;
+            background: -webkit-linear-gradient(45deg, #00d4ff, #ff007f);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff007f, #ff5e00);
+            border: 2px solid rgba(255,255,255,0.2);
+            padding: 15px 50px; border-radius: 50px;
+            color: white; font-family: 'Fredoka One', cursive;
+            font-size: 22px; cursor: pointer; margin: 10px;
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.3);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        .char-grid { display: flex; gap: 15px; margin-bottom: 30px; }
+        .char-card {
+            width: 100px; height: 140px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 15px; cursor: pointer;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        .char-card img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; transition: 0.3s; }
+        .char-card.selected { border-color: var(--primary); background: rgba(0, 212, 255, 0.15); transform: translateY(-5px); }
+        .char-card.selected img { opacity: 1; }
+        .char-info { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.7); text-align: center; padding: 5px 0; }
+        .char-name { color: white; font-size: 12px; font-weight: bold; }
+
+        #victory-screen h1 { background: -webkit-linear-gradient(45deg, #ffd700, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat-box { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; text-align: center; color: white; margin-bottom: 20px; }
+
+    </style>
 </head>
 <body>
 
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="logo">BSA PRODUCTION<span class="dot">.</span></div>
-        <ul class="nav-links">
-            <li><a href="#work">Work</a></li>
-            <li><a href="#services">Services</a></li>
-            <li><a href="#contact" class="btn-nav">Get a Quote</a></li>
-        </ul>
-    </nav>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
 
-    <!-- Hero Section -->
-    <header class="hero">
-        <video autoplay muted loop playsinline class="hero-video" poster="assets/slider-final.jpg">
-            <source src="assets/hero-loop.mp4" type="video/mp4">
-            <img src="assets/slider-final.jpg" alt="3D Product Render">
-        </video>
-        <div class="hero-overlay"></div>
-        <div class="hero-content">
-            <h1>Hyper-realistic 3D Product Visualization</h1>
-            <p>Turning CAD data into market-ready photorealistic assets.</p>
-            <a href="#contact" class="btn-primary">Start Project</a>
-        </div>
-    </header>
-
-    <!-- Tech Stack -->
-    <section class="tech-stack">
-        <p class="tech-label">POWERED BY</p>
-        <div class="tech-icons">
-            <i class="fa-solid fa-cube" title="Blender 3D"></i>
-            <i class="fa-solid fa-layer-group" title="Adobe Suite"></i>
-            <i class="fa-solid fa-microchip" title="RTX Workstation"></i>
-            <span>Cycles / Eevee</span>
-        </div>
-    </section>
-
-    <!-- Portfolio Section -->
-    <section id="work" class="section">
-        <div class="section-header">
-            <h2>Selected Works</h2>
-            <p>Interactive 3D models and high-fidelity renders.</p>
-        </div>
-
-        <div class="portfolio-grid">
+        <div class="ui-layer">
+            <div id="top-bar">
+                <div class="hud-row">
+                    <div>LEVEL <span id="level-display">1</span></div>
+                    <div>SCORE <span id="score">0</span></div>
+                </div>
+                <div style="font-size:10px; color:#aaa; margin-bottom:3px;">WAVE PROGRESS</div>
+                <div id="progress-container">
+                    <div id="progress-fill"></div>
+                </div>
+            </div>
             
-            <!-- Project 1: Comparison Slider -->
-            <div class="project-card">
-                <div class="comparison-container square-aspect" id="comparison-1">
-                    <img src="assets/slider-clay.jpg" alt="Clay Render" class="comp-img-bottom">
-                    <div class="comp-img-top-wrapper">
-                        <img src="assets/slider-final.jpg" alt="Final Render" class="comp-img-top">
-                    </div>
-                    <div class="slider-handle">
-                        <div class="handle-line"></div>
-                        <div class="handle-circle"><i class="fa-solid fa-arrows-left-right"></i></div>
-                        <div class="handle-line"></div>
-                    </div>
-                </div>
-                <div class="project-info">
-                    <h3>'RSA Deatho' Fragrance</h3>
-                    <p>Before/After: Clay vs. Final Render</p>
-                </div>
+            <!-- IMMERSIVE CENTER REACTION -->
+            <div id="reaction-overlay">
+                <div id="reaction-bubble">Nice Shot!</div>
+                <img id="reaction-image" src="" alt="Reaction">
             </div>
 
-            <!-- Project 2: INTERACTIVE 3D MODEL -->
-            <div class="project-card">
-                <div class="model-wrapper">
-                    <model-viewer 
-    src="assets/glass-study.glb" 
-    poster="assets/project-glass.jpg" 
-    alt="3D Interactive Bottle" 
-    shadow-intensity="1" 
-    camera-controls 
-    auto-rotate 
-    touch-action="pan-y"
-    environment-image="neutral" 
-    exposure="1.2">
-</model-viewer>
-                </div>
-                <div class="project-info">
-                    <h3>Interactive Glass Study</h3>
-                    <p>Click and drag to rotate the 3D model.</p>
-                </div>
-            </div>
-
-            <!-- Project 3: Static Image -->
-            <div class="project-card">
-                <img src="assets/project-stylized.jpg" alt="Stylized Composition" class="static-img">
-                <div class="project-info">
-                    <h3>Abstract Composition</h3>
-                    <p>Material study and procedural texturing.</p>
-                </div>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- Services Section -->
-    <section id="services" class="section services-bg">
-        <div class="section-header">
-            <h2>Services</h2>
-        </div>
-        <div class="services-grid">
-            <div class="service-card">
-                <i class="fa-solid fa-shapes"></i>
-                <h3>Product Modeling</h3>
-                <p>High-poly modeling optimized for close-up photorealistic shots.</p>
-            </div>
-            <div class="service-card">
-                <i class="fa-solid fa-lightbulb"></i>
-                <h3>Studio Rendering</h3>
-                <p>Lighting setups designed for E-commerce (Amazon, Shopify).</p>
-            </div>
-            <div class="service-card">
-                <i class="fa-solid fa-film"></i>
-                <h3>3D Animation</h3>
-                <p>Cinematic reveals and 360-degree turntable loops.</p>
+            <!-- Small Corner Character (Always there) -->
+            <div id="character-area">
+                <img id="waifu-sprite" src="" alt="Character">
             </div>
         </div>
-    </section>
 
-    <!-- Footer -->
-    <footer id="contact">
-        <div class="footer-content">
-            <div class="footer-left">
-                <h2>Let's create something real.</h2>
-                <p><strong>Bhavesh Ahire</strong></p>
-                <p class="email-link"><a href="mailto:bhaveshahire14700@gmail.com">bhaveshahire14700@gmail.com</a></p>
-                <p class="hardware-note"><i class="fa-solid fa-bolt"></i> Powered by NVIDIA RTX</p>
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen">
+            <h1>Waifu<br>Breaker</h1>
+            <p style="color:#aaa; font-size:14px; margin-bottom:15px;">SELECT YOUR PARTNER</p>
+            <div class="char-grid">
+                <div class="char-card" onclick="selectChar('yandere', this)">
+                    <img src="assets/akari_neutral.jpg" alt="Akari">
+                    <div class="char-info"><div class="char-name">Akari</div></div>
+                </div>
+                <div class="char-card selected" onclick="selectChar('tsundere', this)">
+                    <img src="assets/rin_neutral.jpg" alt="Rin">
+                    <div class="char-info"><div class="char-name">Rin</div></div>
+                </div>
+                <div class="char-card" onclick="selectChar('child', this)">
+                    <img src="assets/hana_neutral.jpg" alt="Hana">
+                    <div class="char-info"><div class="char-name">Hana</div></div>
+                </div>
             </div>
-            <div class="footer-right">
-                <form class="contact-form">
-                    <input type="text" placeholder="Name" required>
-                    <input type="email" placeholder="Email" required>
-                    <textarea placeholder="Tell me about your project..." rows="4" required></textarea>
-                    <button type="submit" class="btn-primary">Send Request</button>
-                </form>
+            <button class="btn" onclick="initLevel(1)">START GAME</button>
+        </div>
+
+        <!-- Level Complete Screen -->
+        <div id="victory-screen" class="screen hidden">
+            <!-- Content filled dynamically for immersive effect -->
+            <div style="margin-top: 250px;"> <!-- Push content down so center image is visible -->
+                <h1>VICTORY!</h1>
+                <div class="stat-box">
+                    <p style="font-size:18px; margin:0;">Level <span id="vic-level">1</span> Complete</p>
+                    <p style="font-size:14px; color:#ccc; margin-top:5px;" id="vic-msg">"Good job!"</p>
+                </div>
+                <button class="btn" onclick="nextLevel()">NEXT LEVEL</button>
             </div>
         </div>
-    </footer>
 
-    <script src="script.js"></script>
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="screen hidden">
+             <div style="margin-top: 250px;">
+                <h1 style="color:#ff3333 !important; -webkit-text-fill-color: #ff3333;">DEFEAT</h1>
+                <p id="lose-msg" style="color:white; margin-bottom:20px; text-align:center; padding:0 20px;">...</p>
+                <button class="btn" onclick="retryLevel()">TRY AGAIN</button>
+                <button class="btn" style="background:#444; font-size:16px;" onclick="showStartScreen()">MENU</button>
+            </div>
+        </div>
+        
+        <!-- Game Complete (All Levels) -->
+        <div id="endgame-screen" class="screen hidden">
+            <h1>CAMPAIGN<br>COMPLETE!</h1>
+            <div style="font-size:60px;">👑</div>
+            <p style="color:white; text-align:center; padding:20px;">You cleared all 5 levels!<br>Your Waifu is impressed!</p>
+            <button class="btn" onclick="showStartScreen()">MAIN MENU</button>
+        </div>
+    </div>
+
+    <script>
+        /* =========================================
+           ASSETS
+           ========================================= */
+        const ASSETS = {
+            yandere: {
+                name: "Akari", 
+                color: "#ff003c", 
+                expressions: {
+                    neutral: "assets/akari_neutral.jpg", 
+                    win: "assets/akari_win.jpg",    
+                    lose: "assets/akari_lose.jpg",   
+                    action: "assets/akari_action.jpg"  
+                },
+                lines: {
+                    start: ["Level {L}? Easy.", "Don't let them touch me."],
+                    win: ["Perfect together.", "Don't leave me."],
+                    lose: ["No... NO!", "I won't let it end!"],
+                    hit: ["Die!", "Break!"],
+                    combo: ["Wonderful!", "Yes! YES!"],
+                    poor: ["Is that it?", "Try harder."]
+                }
+            },
+            tsundere: {
+                name: "Rin", 
+                color: "#ff9100", 
+                expressions: {
+                    neutral: "assets/rin_neutral.jpg", 
+                    win: "assets/rin_win.jpg", 
+                    lose: "assets/rin_lose.jpg", 
+                    action: "assets/rin_action.jpg" 
+                },
+                lines: {
+                    start: ["Don't mess up.", "I'm ready, I guess."],
+                    win: ["Hmph. Not bad.", "Finally over."],
+                    lose: ["Are you kidding?!", "Unbelievable!"],
+                    hit: ["Take that!", "Weak!"],
+                    combo: ["Okay, you're good!", "Wow!"],
+                    poor: ["Really?", "Baka!"]
+                }
+            },
+            child: {
+                name: "Hana", 
+                color: "#00ffaa", 
+                expressions: {
+                    neutral: "assets/hana_neutral.jpg", 
+                    win: "assets/hana_win.jpg", 
+                    lose: "assets/hana_lose.jpg", 
+                    action: "assets/hana_action.jpg" 
+                },
+                lines: {
+                    start: ["Let's go!", "Hana will help!"],
+                    win: ["Yay! We won!", "Did you see that?!"],
+                    lose: ["Ouchie...", "Hana is sad..."],
+                    hit: ["Boing!", "Pop!"],
+                    combo: ["Wow!", "So fast!"],
+                    poor: ["Uh oh...", "Missed it!"]
+                }
+            }
+        };
+
+        const LEVELS = [
+            { id: 1, name: "Tutorial", rows: 3,  hpMin: 1, hpMax: 2 },
+            { id: 2, name: "Warm Up",  rows: 5,  hpMin: 2, hpMax: 4 },
+            { id: 3, name: "Combat",   rows: 8,  hpMin: 3, hpMax: 6 },
+            { id: 4, name: "Horde",    rows: 12, hpMin: 5, hpMax: 10 },
+            { id: 5, name: "The End",  rows: 15, hpMin: 8, hpMax: 15 }
+        ];
+
+        /* =========================================
+           GAME ENGINE
+           ========================================= */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        const COLS = 9;
+        const BOTTOM_MARGIN = 200; 
+        const TOP_MARGIN = 60;
+
+        let selectedCharKey = 'tsundere';
+        let currentLevelIndex = 0;
+        let gameState = 'START';
+        
+        let balls = [];
+        let blocks = [];
+        let particles = [];
+
+        let score = 0;
+        let ballCount = 1;
+        let ballRadius = 0;
+        let blockWidth = 0, blockHeight = 0;
+        let startX, startY;
+        let launchVector = {x: 0, y: 0};
+        
+        let rowsSpawned = 0;
+        let ballsToShoot = 0;
+        let shootTimer = 0;
+        let newStartX = null;
+        let isDragging = false;
+        let mouseX=0, mouseY=0;
+
+        // NEW: Turn Stats
+        let hitsThisTurn = 0;
+        let reactionTimer = null;
+
+        function resize() {
+            const container = document.getElementById('game-container');
+            width = canvas.width = container.clientWidth;
+            height = canvas.height = container.clientHeight;
+            blockWidth = width / COLS;
+            blockHeight = blockWidth * 0.9;
+            ballRadius = blockWidth * 0.15;
+            if(gameState !== 'SHOOTING') {
+                startX = width/2; 
+                startY = height - BOTTOM_MARGIN;
+            }
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- Core Functions ---
+
+        function selectChar(key, el) {
+            selectedCharKey = key;
+            document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function initLevel(levelNum) {
+            currentLevelIndex = levelNum - 1;
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            hideReaction(); // Clear any old reactions
+
+            balls = [];
+            blocks = [];
+            particles = [];
+            
+            ballCount = 1 + (currentLevelIndex * 2);
+            score = 0;
+            rowsSpawned = 0;
+            hitsThisTurn = 0;
+            
+            startX = width / 2;
+            startY = height - BOTTOM_MARGIN;
+            
+            updateVisuals();
+            updateProgressUI();
+            addBlockRow(); 
+
+            gameState = 'AIMING';
+            
+            // Show start reaction
+            triggerReaction('start', ASSETS[selectedCharKey].lines.start[0]);
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        function nextLevel() {
+            if (currentLevelIndex + 1 >= LEVELS.length) {
+                document.getElementById('victory-screen').classList.add('hidden');
+                document.getElementById('endgame-screen').classList.remove('hidden');
+            } else {
+                initLevel(currentLevelIndex + 2);
+            }
+        }
+
+        function retryLevel() { initLevel(currentLevelIndex + 1); }
+        function showStartScreen() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById('start-screen').classList.remove('hidden');
+        }
+
+        function updateVisuals() {
+            const char = ASSETS[selectedCharKey];
+            document.documentElement.style.setProperty('--primary', char.color);
+            document.getElementById('level-display').innerText = currentLevelIndex + 1;
+            // Set corner sprite to neutral by default
+            document.getElementById('waifu-sprite').src = char.expressions.neutral;
+        }
+
+        /* --- IMMERSIVE REACTION SYSTEM --- */
+        function triggerReaction(type, textOverride = null) {
+            const overlay = document.getElementById('reaction-overlay');
+            const img = document.getElementById('reaction-image');
+            const bubble = document.getElementById('reaction-bubble');
+            const char = ASSETS[selectedCharKey];
+
+            let imgSrc = char.expressions.neutral;
+            let text = "";
+            let animClass = "";
+
+            // Determine assets based on type
+            if (type === 'start') {
+                imgSrc = char.expressions.neutral;
+                text = textOverride || char.lines.start[0];
+                animClass = 'anim-pop';
+            }
+            else if (type === 'good') { // High Combo
+                imgSrc = char.expressions.action;
+                text = char.lines.combo[Math.floor(Math.random()*char.lines.combo.length)];
+                animClass = 'anim-pop';
+            } 
+            else if (type === 'bad') { // Low Hits
+                imgSrc = char.expressions.lose;
+                text = char.lines.poor[Math.floor(Math.random()*char.lines.poor.length)];
+                animClass = 'anim-shake';
+            }
+            else if (type === 'win') {
+                imgSrc = char.expressions.win;
+                text = textOverride || char.lines.win[0];
+                animClass = 'anim-win';
+            }
+            else if (type === 'lose') {
+                imgSrc = char.expressions.lose;
+                text = textOverride || char.lines.lose[0];
+                animClass = 'anim-lose';
+            }
+
+            // Apply
+            img.src = imgSrc;
+            bubble.innerText = text;
+            
+            // Reset Animation
+            overlay.className = ''; 
+            void overlay.offsetWidth; // Trigger reflow
+            overlay.className = 'active ' + animClass;
+
+            // Auto-hide if not a game-ending state
+            if (reactionTimer) clearTimeout(reactionTimer);
+            if (type !== 'win' && type !== 'lose') {
+                reactionTimer = setTimeout(() => {
+                    hideReaction();
+                }, 2000); // Show for 2 seconds
+            }
+        }
+
+        function hideReaction() {
+            document.getElementById('reaction-overlay').className = '';
+        }
+
+        function updateProgressUI() {
+            const lvl = LEVELS[currentLevelIndex];
+            const pct = (rowsSpawned / lvl.rows) * 100;
+            document.getElementById('progress-fill').style.width = Math.min(pct, 100) + "%";
+            document.getElementById('score').innerText = score;
+        }
+
+        // --- Gameplay Logic ---
+
+        function addBlockRow() {
+            const lvl = LEVELS[currentLevelIndex];
+            for (let b of blocks) {
+                b.row++;
+                b.y += blockHeight;
+                if (b.y + blockHeight > startY - 10) {
+                    gameOver();
+                    return;
+                }
+            }
+
+            if (rowsSpawned < lvl.rows) {
+                for (let c = 0; c < COLS; c++) {
+                    let rand = Math.random();
+                    if (rand < 0.35) continue; 
+                    let x = c * blockWidth;
+                    let y = TOP_MARGIN + blockHeight;
+                    if (rand > 0.92) {
+                        blocks.push({ c: c, r: 0, x: x, y: y, type: 'bonus', hp: 1, maxHp: 1, color: '#fff' });
+                    } else {
+                        let hp = Math.floor(Math.random() * (lvl.hpMax - lvl.hpMin + 1)) + lvl.hpMin;
+                        if(Math.random() < 0.1) hp = Math.floor(hp * 1.5);
+                        blocks.push({
+                            c: c, r: 0, x: x, y: y,
+                            type: 'block', hp: hp, maxHp: hp,
+                            color: `hsl(${Math.random() * 40 + (currentLevelIndex * 40) % 360}, 70%, 60%)`
+                        });
+                    }
+                }
+                rowsSpawned++;
+                updateProgressUI();
+            }
+        }
+
+        function shootBalls() {
+            gameState = 'SHOOTING';
+            ballsToShoot = ballCount;
+            shootTimer = 0;
+            hitsThisTurn = 0; // Reset turn stats
+            newStartX = null;
+            hideReaction(); // Hide any lingering reaction when shooting starts
+        }
+
+        function updatePhysics() {
+            if (ballsToShoot > 0) {
+                shootTimer++;
+                if (shootTimer % 4 === 0) {
+                    balls.push({ x: startX, y: startY, vx: launchVector.x, vy: launchVector.y, active: true });
+                    ballsToShoot--;
+                }
+            }
+
+            let allLanded = (ballsToShoot === 0);
+            balls.forEach(ball => {
+                if (!ball.active) return;
+                allLanded = false;
+                ball.x += ball.vx; ball.y += ball.vy;
+
+                if (ball.x < ballRadius) { ball.x = ballRadius; ball.vx *= -1; }
+                if (ball.x > width - ballRadius) { ball.x = width - ballRadius; ball.vx *= -1; }
+                if (ball.y < ballRadius) { ball.y = ballRadius; ball.vy *= -1; }
+
+                if (ball.y > startY) {
+                    ball.active = false; ball.vx = 0; ball.vy = 0;
+                    if (newStartX === null) newStartX = ball.x;
+                    return;
+                }
+
+                let col = Math.floor(ball.x / blockWidth);
+                if (col < 0) col = 0; if (col >= COLS) col = COLS-1;
+
+                for (let i = blocks.length - 1; i >= 0; i--) {
+                    let b = blocks[i];
+                    if (ball.x + ballRadius > b.x && ball.x - ballRadius < b.x + blockWidth &&
+                        ball.y + ballRadius > b.y && ball.y - ballRadius < b.y + blockHeight) {
+                        
+                        if (b.type === 'bonus') {
+                            ballCount++;
+                            createParticles(b.x + blockWidth/2, b.y + blockHeight/2, '#fff', 5);
+                            blocks.splice(i, 1);
+                        } else {
+                            // Collision logic
+                            let overlapLeft = (ball.x + ballRadius) - b.x;
+                            let overlapRight = (b.x + blockWidth) - (ball.x - ballRadius);
+                            let overlapTop = (ball.y + ballRadius) - b.y;
+                            let overlapBottom = (b.y + blockHeight) - (ball.y - ballRadius);
+                            let min = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+                            if (min === overlapLeft || min === overlapRight) ball.vx *= -1;
+                            else ball.vy *= -1;
+
+                            b.hp--; score++;
+                            hitsThisTurn++; // Count hit!
+                            
+                            if (b.hp <= 0) {
+                                createParticles(b.x + blockWidth/2, b.y + blockHeight/2, b.color, 8);
+                                blocks.splice(i, 1);
+                            }
+                        }
+                        break; 
+                    }
+                }
+            });
+
+            for(let i=particles.length-1; i>=0; i--) {
+                let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+                if(p.life <= 0) particles.splice(i, 1);
+            }
+            if (allLanded && ballsToShoot === 0) endTurn();
+        }
+
+        function endTurn() {
+            if (newStartX !== null) startX = Math.max(20, Math.min(width - 20, newStartX));
+            balls = [];
+            const lvl = LEVELS[currentLevelIndex];
+            
+            // Check Turn Performance
+            if (blocks.length === 0 && rowsSpawned >= lvl.rows) {
+                levelVictory();
+                return;
+            } 
+            
+            // Logic for Reactions based on hitsThisTurn
+            if (hitsThisTurn <= 2 && hitsThisTurn > -1) {
+                triggerReaction('bad');
+            } else if (hitsThisTurn >= 6) {
+                triggerReaction('good');
+            }
+
+            addBlockRow(); 
+            if (gameState !== 'END') gameState = 'AIMING';
+        }
+
+        function levelVictory() {
+            gameState = 'END';
+            const char = ASSETS[selectedCharKey];
+            document.getElementById('vic-level').innerText = currentLevelIndex + 1;
+            document.getElementById('vic-msg').innerText = char.lines.win[0];
+            document.getElementById('victory-screen').classList.remove('hidden');
+            
+            // Show Victory Reaction
+            triggerReaction('win');
+            
+            // Confetti effect
+            for(let i=0; i<50; i++) {
+                createParticles(width/2, height/2, `hsl(${Math.random()*360}, 100%, 50%)`, 2);
+            }
+        }
+
+        function gameOver() {
+            gameState = 'END';
+            const char = ASSETS[selectedCharKey];
+            document.getElementById('lose-msg').innerText = char.lines.lose[0];
+            document.getElementById('game-over-screen').classList.remove('hidden');
+            
+            // Show Defeat Reaction
+            triggerReaction('lose');
+        }
+
+        function createParticles(x, y, color, count) {
+            for(let i=0; i<count; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8,
+                    life: 1.0, color: color
+                });
+            }
+        }
+
+        // --- Input & Draw ---
+        canvas.addEventListener('mousedown', pDown);
+        canvas.addEventListener('touchstart', e => pDown(e.touches[0]));
+        window.addEventListener('mousemove', pMove);
+        window.addEventListener('touchmove', e => pMove(e.touches[0]));
+        window.addEventListener('mouseup', pUp);
+        window.addEventListener('touchend', pUp);
+
+        function pDown(e) {
+            if (gameState !== 'AIMING') return;
+            const r = canvas.getBoundingClientRect();
+            if (e.clientY - r.top > startY + 20) return;
+            isDragging = true;
+            updatePos(e);
+        }
+        function pMove(e) { if(isDragging) updatePos(e); }
+        function pUp() {
+            if(isDragging && gameState === 'AIMING') {
+                isDragging = false;
+                let dx = mouseX - startX, dy = mouseY - startY;
+                if(dy > -10) return; 
+                let len = Math.sqrt(dx*dx+dy*dy);
+                launchVector = { x: (dx/len)*15, y: (dy/len)*15 };
+                shootBalls();
+            }
+        }
+        function updatePos(e) {
+            const r = canvas.getBoundingClientRect();
+            mouseX = e.clientX - r.left; mouseY = e.clientY - r.top;
+        }
+
+        function draw() {
+            ctx.clearRect(0,0,width,height);
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            
+            blocks.forEach(b => {
+                if (b.type === 'bonus') {
+                    ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.beginPath();
+                    ctx.arc(b.x+blockWidth/2, b.y+blockHeight/2, blockWidth/4, 0, Math.PI*2);
+                    ctx.stroke();
+                    ctx.fillStyle='#fff'; ctx.font='bold 16px Arial';
+                    ctx.fillText('+', b.x+blockWidth/2, b.y+blockHeight/2);
+                } else {
+                    ctx.fillStyle = b.color; ctx.globalAlpha = 0.3;
+                    ctx.fillRect(b.x+2, b.y+2, blockWidth-4, blockHeight-4);
+                    ctx.globalAlpha = 1;
+                    ctx.strokeStyle = b.color; ctx.lineWidth = 2;
+                    ctx.strokeRect(b.x+2, b.y+2, blockWidth-4, blockHeight-4);
+                    ctx.fillStyle = '#fff'; ctx.font = 'bold 16px "Fredoka One"';
+                    ctx.fillText(b.hp, b.x+blockWidth/2, b.y+blockHeight/2);
+                }
+            });
+
+            ctx.fillStyle = '#fff';
+            balls.forEach(b => {
+                if(b.active) { ctx.beginPath(); ctx.arc(b.x, b.y, ballRadius, 0, Math.PI*2); ctx.fill(); }
+            });
+
+            particles.forEach(p => {
+                ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
+                ctx.fillRect(p.x, p.y, 4, 4); ctx.globalAlpha = 1;
+            });
+
+            if (gameState === 'AIMING' || gameState === 'SHOOTING') {
+                ctx.fillStyle = ASSETS[selectedCharKey].color;
+                ctx.beginPath(); ctx.arc(startX, startY, 6, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif';
+                ctx.fillText(`x${ballCount}`, startX, startY+20);
+
+                if (gameState === 'AIMING' && isDragging) {
+                    let dx = mouseX - startX, dy = mouseY - startY;
+                    if(dy < 0) {
+                        ctx.strokeStyle = ASSETS[selectedCharKey].color;
+                        ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+                        ctx.beginPath(); ctx.moveTo(startX, startY);
+                        let angle = Math.atan2(dy, dx);
+                        ctx.lineTo(startX+Math.cos(angle)*800, startY+Math.sin(angle)*800);
+                        ctx.stroke(); ctx.setLineDash([]);
+                    }
+                }
+            }
+            
+            ctx.strokeStyle = 'rgba(255,0,0,0.3)'; ctx.lineWidth=1;
+            ctx.beginPath(); ctx.moveTo(0, startY-10); ctx.lineTo(width, startY-10); ctx.stroke();
+        }
+
+        function gameLoop() {
+            if(gameState === 'SHOOTING') updatePhysics();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+    </script>
 </body>
 </html>
